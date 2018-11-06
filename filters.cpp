@@ -1,5 +1,6 @@
 
 #include <stdint.h>
+#include <stdio.h>
 #include <time.h>
 
 #include <iostream>
@@ -27,6 +28,9 @@ result(\
       zip(c1_values, c1_nulls, c2_values, c2_nulls, c3_values, c3_nulls, c4_values, c4_nulls),\
       merger[i64,+],\
       |b, i, e|\
+      if(e.$1 == false,\
+      if(e.$3 == false,\
+      if(e.$5 == false,\
       if(e.$1 == false && e.$0 < 0,\
         if(e.$3 == false && e.$2 < 0,\
           if(e.$5 == false && e.$4 < 0,\
@@ -38,7 +42,10 @@ result(\
           b\
           ),\
         b\
-        )\
+        ),\
+      b),\
+      b),\
+      b)\
       )\
     )";
 
@@ -126,24 +133,45 @@ public:
 
 typedef long (*benchmark)(dataset *);
 
-int driver(benchmark b, dataset *data) {
-     std::clock_t start, end;
+int driver(benchmark b, const char *name, dataset *data) {
 
-     start = std::clock();
-     long x = b(data);
-     end = std::clock();
+  long result;
+  double average = 0;
 
-     double runtime = (end - start) / (double)(CLOCKS_PER_SEC / 1000);
+  const int trials = 10;
+  double times[trials];
 
-     std::cout
-       << "Time: "
-       << runtime
-       << " ms"
-       << ", Result: "
-       << x
-       << std::endl;
+  std::cout << name << std::endl;
+  for (int i = 0; i < trials + 1; i++) {
+    std::clock_t start, end;
 
-     return x;
+    start = std::clock();
+    result = b(data);
+    end = std::clock();
+
+    double runtime = (end - start) / (double)(CLOCKS_PER_SEC / 1000);
+
+    if (i != 0) {
+      times[i] = runtime;
+      average += runtime;
+    }
+
+    std::cout
+      << "\tTime: "
+      << runtime
+      << " ms"
+      << ", Result: "
+      << result
+      << std::endl;
+
+  }
+
+  std::cout
+    << "Average runtime: "
+    << (average / (double)trials)
+    << std::endl;
+
+  return result;
 }
 
 // Implementations of the benchmark.
@@ -170,12 +198,12 @@ long preload(dataset *data) {
     int32_t c1v, c2v, c3v, c4v;
     uint8_t c1n, c2n, c3n, c4n;
     c1v = data->c1.values[i];
-    c2v = data->c2.values[i];
-    c3v = data->c3.values[i];
-    c4v = data->c4.values[i];
     c1n = data->c1.nulls[i];
+    c2v = data->c2.values[i];
     c2n = data->c2.nulls[i];
+    c3v = data->c3.values[i];
     c3n = data->c3.nulls[i];
+    c4v = data->c4.values[i];
     c4n = data->c4.nulls[i];
     if (c1n == 0 && c1v < 0) {
       if (c2n == 0 && c2v < 0) {
@@ -232,18 +260,23 @@ int main(int argc, char **argv) {
   char *endptr;
   long columns;
   if (argc > 1) {
-    strtol(argv[1], &endptr, 10);
+    columns = strtol(argv[1], &endptr, 10);
     assert(endptr != argv[1]);
   } else {
     columns = COLUMNS;
   }
 
+  std::cout << "Generating data...";
+  fflush(stdout);
   dataset d(columns);
-  // Create a Weld-friendly view of the dataset.
-  weld_dataset wd(d);
 
-  // Initialize weld program.
+  std::cout << "Setting up Weld...";
+  fflush(stdout);
+  weld_dataset wd(d);
+  d.weld_data = &wd;
   compile_weld();
+  std::cout << "done." << std::endl;
+  fflush(stdout);
 
   struct benchmark_entry {
     benchmark b;
@@ -259,10 +292,7 @@ int main(int argc, char **argv) {
 
   int j = 0;
   while (benchmarks[j].b != NULL) {
-    std::cout << benchmarks[j].name << std::endl;
-    for (int i = 0; i < 10; i++) {
-      driver(standard, &d);
-    }
+    driver(benchmarks[j].b, benchmarks[j].name, &d);
     j++;
   }
 }

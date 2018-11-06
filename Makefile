@@ -1,5 +1,5 @@
 CC=clang++
-CFLAGS=-O3 -march=native -std=c++14 -I/Users/shoumikpalkar/work/weld/c -L/Users/shoumikpalkar/work/weld/target/debug -lweld
+CFLAGS=-O3 -Wall -march=native -std=c++14 -I/Users/shoumikpalkar/work/weld/c -L/Users/shoumikpalkar/work/weld/target/debug -lweld
 
 .PHONY: all llvm asm clean
 
