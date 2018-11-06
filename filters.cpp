@@ -28,9 +28,6 @@ result(\
       zip(c1_values, c1_nulls, c2_values, c2_nulls, c3_values, c3_nulls, c4_values, c4_nulls),\
       merger[i64,+],\
       |b, i, e|\
-      if(e.$1 == false,\
-      if(e.$3 == false,\
-      if(e.$5 == false,\
       if(e.$1 == false && e.$0 < 0,\
         if(e.$3 == false && e.$2 < 0,\
           if(e.$5 == false && e.$4 < 0,\
@@ -42,10 +39,7 @@ result(\
           b\
           ),\
         b\
-        ),\
-      b),\
-      b),\
-      b)\
+        )\
       )\
     )";
 
