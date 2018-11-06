@@ -1,0 +1,31 @@
+|
+  c1_values: vec[i32],
+  c1_nulls: vec[bool],
+  c2_values: vec[i32],
+  c2_nulls: vec[bool],
+  c3_values: vec[i32],
+  c3_nulls: vec[bool],
+  c4_values: vec[i32],
+  c4_nulls: vec[bool]
+|
+
+result(
+    for(
+      zip(c1_values, c1_nulls, c2_values, c2_nulls, c3_values, c3_nulls, c4_values, c4_nulls),
+      merger[i64,+],
+      |b, i, e|
+      if(e.$1 == false && e.$0 < 0,
+        if(e.$3 == false && e.$2 < 0,
+          if(e.$5 == false && e.$4 < 0,
+            if(e.$7 == false && e.$6 < 0,
+              merge(b, 1L), b
+              ),
+            b
+            ),
+          b
+          ),
+        b
+        )
+      )
+    )
+
