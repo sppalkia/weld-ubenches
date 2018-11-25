@@ -4,4 +4,4 @@
 *.weld
 bench
 *.swp
-
+*.class

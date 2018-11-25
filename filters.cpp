@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define COLUMNS (200 * 1000 * 1000)
+#define COLUMNS (20 * 1000 * 1000)
 
 const char *PROGRAM = "\
 |\
